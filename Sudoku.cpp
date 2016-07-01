@@ -589,10 +589,10 @@ void Sudoku::sendDigitsToOCR()
 	cout << "Recognizing the Digits....\n";
 	cout << "Please wait....\n";
 	
-	Rect rect = Rect((1* cellLength + 6), 6 + (0 * cellLength), cellLength-6 , cellLength-6);
+	/*Rect rect = Rect((1* cellLength + 6), 6 + (0 * cellLength), cellLength-6 , cellLength-6);
 	_cell = Mat(_threshAllignedSudoku, rect);
 	Moments momentum = moments(_cell, false);
-	cout << momentum.m00 << endl;
+	cout << momentum.m00 << endl;*/
 	//_cell.copyTo(newimg);
 	//if (newimg.isContinuous()){
 	//
@@ -613,7 +613,7 @@ void Sudoku::sendDigitsToOCR()
 	
 	//Mat resized;
 	//resize(_cell, resized, Size(20, 30));
-	imshow("test", _cell);
+   //	imshow("test", _cell);
 	//imshow("resize", resized);
 	for (int i = 0; i < 9; i++){
 	
@@ -842,5 +842,42 @@ void Sudoku::printSolvedSudoku()
 		}
 	}
 
+	//waitKey(0);
+}
+
+void Sudoku::overlayResult()
+{
+	Mat Cell;
+
+	int cellLength = floor((float)_allignedSudoku.size().width / 9);
+
+	for (int i = 0; i < 9; i++){
+
+		for (int j = 0; j < 9; j++){
+
+			Rect rect = Rect((j * cellLength + 6), 6 + (i * cellLength), cellLength - 6, cellLength - 6);
+			Cell = Mat(_threshAllignedSudoku, rect);
+
+			Moments moment = moments(Cell, false);
+			if (moment.m00 >= 1000){
+				
+				continue;
+
+			}
+			else{
+			
+				char digits[3];
+				int overlayDigit = _sudokuDigits[i][j];
+				sprintf(digits, "%d", overlayDigit);
+				putText(_allignedSudoku, digits, Point(rect.x+5, rect.y+15), 1, 1.2, Scalar(255, 0, 0), 1, CV_AA);
+			}
+
+				
+
+		}
+		//cout << endl;
+
+	}
+	imshow(allignedSudokuWindow, _allignedSudoku);
 	waitKey(0);
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #include "OCR.h"
 
 
@@ -20,6 +22,7 @@ public:
 	void sendDigitsToOCR(/*OCR recogDigit*/);
 	void printInputSudoku();
 	void printSolvedSudoku();
+	void overlayResult();
 
 	//capture the sudoku from the webacam 
 	void captureSudoku(VideoCapture cap);

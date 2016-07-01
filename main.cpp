@@ -53,6 +53,8 @@ int main()
 		if (isSolved == true){
 		
 			sudoku.printSolvedSudoku();
+			
+			sudoku.overlayResult();
 		}
 		else {
 			
