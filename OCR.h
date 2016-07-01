@@ -18,7 +18,7 @@ public:
 	
 	OCR();
 	void genData(string trainImg);
-	void Train(Mat img);
+	/*void*/int  Train(Mat img);
 	void Recognize( Mat img);
 	Mat classificationNumsTrain;
 	Mat imageAsFlattenedFloatTrain;

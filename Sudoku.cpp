@@ -57,6 +57,10 @@ void Sudoku::captureSudoku(VideoCapture cap)
 
 }
 
+
+/////////////////////////////This is the image processing part////////////////////////////////////
+
+
 //perform various processings
 void Sudoku::processSudoku(bool loadByImg)
 {
@@ -571,21 +575,24 @@ void Sudoku::sendDigitsToOCR()
 {
 	
 	
-	if (_cell.isContinuous()){
+	/*if (_cell.isContinuous()){
 	
 		cout << "_Cell1 continuos" << endl;
 	}
-	else cout << "_cell1 continous" << endl;
+	else cout << "_cell1 continous" << endl;*/
 
 	int cellLength = floor((float)_allignedSudoku.size().width / 9);
 
-	cout << cellLength << endl;
+	//cout << cellLength << endl;
 	//cout << _allignedSudoku.size().width;
 	
-	cout << endl;
+	cout << "Recognizing the Digits....\n";
+	cout << "Please wait....\n";
 	
-	//Rect rect = Rect((2* cellLength + 6), 6 + (7 * cellLength), cellLength-10 , cellLength-6);
-	//_cell = Mat(_threshAllignedSudoku, rect);
+	Rect rect = Rect((1* cellLength + 6), 6 + (0 * cellLength), cellLength-6 , cellLength-6);
+	_cell = Mat(_threshAllignedSudoku, rect);
+	Moments momentum = moments(_cell, false);
+	cout << momentum.m00 << endl;
 	//_cell.copyTo(newimg);
 	//if (newimg.isContinuous()){
 	//
@@ -606,7 +613,7 @@ void Sudoku::sendDigitsToOCR()
 	
 	//Mat resized;
 	//resize(_cell, resized, Size(20, 30));
-	//imshow("test", _cell);
+	imshow("test", _cell);
 	//imshow("resize", resized);
 	for (int i = 0; i < 9; i++){
 	
@@ -617,24 +624,30 @@ void Sudoku::sendDigitsToOCR()
 			//_cell.copyTo(newimg);
 			//_cell = Mat(_allignedSudoku, rect);
 			Moments moment = moments(_cell, false);
-			if (moment.m00 >= 20){
+			if (moment.m00 >=1000){
 				//_ocr.Train(newimg);
 				_preProcessCell();
-				cout << " ";
+
+				//_sudokuDigits[i][j] = _Digit;
+				_sudokuDigits[i][j] = _Digit;
+
+				//cout << " ";
 				//cout << "1"<<" ";
 			}
 			else
-				cout << "." << " ";
+				
+				_sudokuDigits[i][j] = 0;
+				//cout << "." << " ";
 
 			/*char ip = waitKey(0);
 			if (ip != 'q'){
 				exit(1);
 			}*/
 		}
-		cout << endl;
+		//cout << endl;
 
 	}
-	waitKey(0);
+	//waitKey(0);
 }
 
 void Sudoku::_preProcessCell()
@@ -651,11 +664,11 @@ void Sudoku::_preProcessCell()
 	for (int i = 0; i < contours.size(); i++){
 	
 		Rect rect = boundingRect(contours[i]);
-		if (rect.x >= 2 && rect.x <= 22 /*&& rect.y >= 2 */)/*&& rect.y <= 18*/{
+		if (rect.x >= 2 && rect.x <= 22 &&contourArea(contours[i])>=20/*&& rect.y >= 2 */)/*&& rect.y <= 18*/{
 		
 			newimg = _cell(rect);
 			resize(newimg, resizedNew, Size(20, 30));
-			_ocr.Train(resizedNew);
+			_Digit=_ocr.Train(resizedNew);
 			//imshow("testing", resizedNew);
 			/*if (resizedNew.isContinuous()){
 			
@@ -665,6 +678,8 @@ void Sudoku::_preProcessCell()
 		}
 		else
 		{
+			cout << contourArea(contours[i]);
+			//_sudokuDigits[i][j] = 0;
 			resize(_cell, resizedNew, Size(20, 30));
 			imshow("problem", resizedNew);
 		}
@@ -674,4 +689,158 @@ void Sudoku::_preProcessCell()
 	
 	
 	
+}
+
+
+
+////////////////////////Solving the Sudoku/////////////////////////////////////////////////
+void Sudoku::printInputSudoku(){
+
+	cout << "---------------------\n";
+	for (int i = 0; i < 9; i++){
+	
+		for (int j = 0; j < 9; j++){
+
+			cout << _sudokuDigits[i][j]<<" ";
+			
+			if ((j + 1) % 3 == 0){
+			
+				cout << "|";
+			}
+
+			
+		}
+		cout << endl;
+
+		if ((i + 1) % 3 == 0){
+
+			cout << "---------------------\n";
+		}
+	}
+
+	//waitKey(0);
+}
+
+bool Sudoku::Solve()
+{
+	int row, col;
+
+	if (!_positionEmpty(row, col)){
+		
+		return true;
+	}
+
+	for (int digit = 1; digit <= 9; digit++){
+		
+		if (_canBePlaced(row, col, digit)){
+		
+		
+			_sudokuDigits[row][col] = digit;
+
+			if (Solve()){
+
+				return true;
+			}
+
+			_sudokuDigits[row][col] = 0;
+		}
+	}
+
+	return false;
+}
+
+bool Sudoku::_positionEmpty(int &row,int &column)
+{
+	for (row = 0; row < 9; row++){
+	
+		for (column = 0; column < 9; column++){
+
+			if (_sudokuDigits[row][column] == 0){
+			
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool Sudoku::_canBePlaced(int row, int column, int digit)
+{
+	if ((!_digitInRow(row, column, digit)) && (!_digitInColumn(row, column, digit)) && (!_digitIn3by3Box(row, column, digit))){
+	
+		return true;
+	}
+	return false;
+	//return !_digitInRow(row, column, digit) && !_digitInColumn(row, column, digit) && !_digitIn3by3Box(row - row % 3, column - column % 3, digit);
+}
+
+bool Sudoku::_digitInRow(int row, int column, int digit)
+{
+	for (int j = 0; j < 9; j++){
+	
+		if (_sudokuDigits[row][j] == digit){
+
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Sudoku::_digitInColumn(int row, int column, int digit)
+{
+	for (int i = 0; i < 9; i++){
+
+		if (_sudokuDigits[i][column] == digit){
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool  Sudoku::_digitIn3by3Box(int row, int column, int digit)
+{
+	int startRow = row - row % 3;
+	int startColumn = column - column % 3;
+
+	for (int i = startRow; i < (startRow + 3); i++){
+
+		for (int j = startColumn; j < (startColumn + 3); j++){
+
+			if (_sudokuDigits[i][j] == digit){
+
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void Sudoku::printSolvedSudoku()
+{
+
+	cout << "---------------------\n";
+	for (int i = 0; i < 9; i++){
+
+		for (int j = 0; j < 9; j++){
+
+			cout << _sudokuDigits[i][j] << " ";
+
+			if ((j + 1) % 3 == 0){
+
+				cout << "|";
+			}
+
+
+		}
+		cout << endl;
+
+		if ((i + 1) % 3 == 0){
+
+			cout << "---------------------\n";
+		}
+	}
+
+	waitKey(0);
 }

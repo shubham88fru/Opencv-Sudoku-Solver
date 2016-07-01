@@ -21,6 +21,7 @@ bool captureSudokuFromCamera = false;
 int main()
 {
 	OCR recognizeDigits;
+	
 
 	if (GenrateOCRData == true){
 		
@@ -44,6 +45,20 @@ int main()
 		sudoku.processSudoku(loadSudokuImg);
 
 		sudoku.sendDigitsToOCR();
+
+		sudoku.printInputSudoku();
+
+		bool isSolved = sudoku.Solve();
+
+		if (isSolved == true){
+		
+			sudoku.printSolvedSudoku();
+		}
+		else {
+			
+			cout << "The provided Sudoku can't be Solved!!!!\n";
+			system("PAUSE");
+		}
 
 	}
 	else if (captureSudokuFromCamera == true){
